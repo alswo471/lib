@@ -1,0 +1,13 @@
+{
+  "mode": "folder",
+  "image_path": "C:/지민재/화면보호기",
+  "timeout_seconds": 300,
+  "slideshow_interval": 2,
+  "scale_mode": "fit",
+  "background": "#000000",
+  "shuffle": true,
+  "mouse_move_exit_pixels": 10,
+  "allow_blank_single": true,
+  "clock_overlay": true,
+  "start_in_tray": false
+}
