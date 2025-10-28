@@ -34,7 +34,7 @@ def default_config():
     }
 
 
-# ---------------------- Windows 유휴/모니터 -----------------------
+# ---------------------- Windows 유휴/모니터 ------------------------
 if IS_WINDOWS:
     import ctypes
     from ctypes import wintypes
