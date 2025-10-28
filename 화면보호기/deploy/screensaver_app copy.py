@@ -20,27 +20,26 @@ SUPPORTED_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".webp")
 # ---------------------- 기본 설정 ----------------------
 def default_config():
     return {
-        "mode": "single",                  # single | folder
-        "image_path": "",                  # 파일 또는 폴더
-        "timeout_seconds": 300,            # 유휴 시간(초)
-        "slideshow_interval": 10,          # 폴더 슬라이드쇼 간격(초)
-        "scale_mode": "fit",               # fit | fill | stretch
-        "background": "#000000",           # 배경색
-        "shuffle": True,                   # 폴더 슬라이드쇼 섞기
-        "mouse_move_exit_pixels": 10,      # 종료 기준 마우스 이동 픽셀
-        "allow_blank_single": True,        # 단일 모드에서 이미지 없을 때 배경만 실행 허용
-        "clock_overlay": False,            # 배경만일 때 시계 오버레이 표시
-        "start_in_tray": False             # 시작 시 트레이로만 실행(트레이 없으면 최소화)
+        "mode": "single",  # single | folder
+        "image_path": "",  # 파일 또는 폴더
+        "timeout_seconds": 300,  # 유휴 시간(초)
+        "slideshow_interval": 10,  # 폴더 슬라이드쇼 간격(초)
+        "scale_mode": "fit",  # fit | fill | stretch
+        "background": "#000000",  # 배경색
+        "shuffle": True,  # 폴더 슬라이드쇼 섞기
+        "mouse_move_exit_pixels": 10,  # 종료 기준 마우스 이동 픽셀
+        "allow_blank_single": True,  # 단일 모드에서 이미지 없을 때 배경만 실행 허용
+        "clock_overlay": False,  # 배경만일 때 시계 오버레이 표시
+        "start_in_tray": False,  # 시작 시 트레이로만 실행(트레이 없으면 최소화)
     }
 
 
-# ---------------------- Windows 유휴/모니터 ----------------------
+# ---------------------- Windows 유휴/모니터 -----------------------
 if IS_WINDOWS:
     import ctypes
     from ctypes import wintypes
     import tkinter.messagebox as messagebox
 
-    
     def is_already_running():
         mutex_name = "screensaver_app_unique_mutex"
         kernel32 = ctypes.windll.kernel32
@@ -52,22 +51,24 @@ if IS_WINDOWS:
         messagebox.showerror("중복 실행", "이미 프로그램이 실행 중입니다.")
         sys.exit(0)
 
-
     # DPI 스케일링 문제 해결: Per-monitor DPI awareness 설정
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
     except Exception:
         pass
 
+
 def get_idle_seconds_windows() -> float:
     """
     Windows: GetLastInputInfo로 시스템 유휴 시간(초)
     """
+
     class LASTINPUTINFO(ctypes.Structure):
         _fields_ = [
             ("cbSize", ctypes.wintypes.UINT),
             ("dwTime", ctypes.wintypes.DWORD),
         ]
+
     lii = LASTINPUTINFO()
     lii.cbSize = ctypes.sizeof(LASTINPUTINFO)
     if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
@@ -87,7 +88,7 @@ def enum_monitors_windows():
         ctypes.wintypes.HMONITOR,
         ctypes.wintypes.HDC,
         ctypes.POINTER(ctypes.wintypes.RECT),
-        ctypes.wintypes.LPARAM
+        ctypes.wintypes.LPARAM,
     )
 
     def _callback(hMonitor, hdcMonitor, lprcMonitor, dwData):
@@ -109,7 +110,8 @@ def get_all_monitors():
     # Fallback: 단일 화면
     root = tk._get_default_root()
     if root is None:
-        temp = tk.Tk(); temp.withdraw()
+        temp = tk.Tk()
+        temp.withdraw()
         w, h = temp.winfo_screenwidth(), temp.winfo_screenheight()
         temp.destroy()
     else:
@@ -125,7 +127,9 @@ def get_idle_seconds():
 
 
 # ---------------------- 이미지 유틸 ----------------------
-def resize_image(img: Image.Image, target_w: int, target_h: int, scale_mode: str) -> Image.Image:
+def resize_image(
+    img: Image.Image, target_w: int, target_h: int, scale_mode: str
+) -> Image.Image:
     if scale_mode == "stretch":
         return img.resize((target_w, target_h), Image.LANCZOS)
 
@@ -209,67 +213,122 @@ class ScreenSaverApp:
         frm.pack(fill="both", expand=True)
 
         # 모드
-        mode_frame = tk.Frame(frm); mode_frame.pack(anchor="w")
+        mode_frame = tk.Frame(frm)
+        mode_frame.pack(anchor="w")
         tk.Label(mode_frame, text="이미지 소스:").pack(side="left", padx=(0, 8))
         self.mode_var = tk.StringVar(value=self.config.get("mode", "single"))
-        tk.Radiobutton(mode_frame, text="단일 이미지", variable=self.mode_var, value="single").pack(side="left")
-        tk.Radiobutton(mode_frame, text="폴더(슬라이드쇼)", variable=self.mode_var, value="folder").pack(side="left")
+        tk.Radiobutton(
+            mode_frame, text="단일 이미지", variable=self.mode_var, value="single"
+        ).pack(side="left")
+        tk.Radiobutton(
+            mode_frame, text="폴더(슬라이드쇼)", variable=self.mode_var, value="folder"
+        ).pack(side="left")
 
         # 경로
-        path_frame = tk.Frame(frm); path_frame.pack(fill="x", pady=(8, 0))
+        path_frame = tk.Frame(frm)
+        path_frame.pack(fill="x", pady=(8, 0))
         tk.Label(path_frame, text="경로:").pack(side="left")
         self.path_entry = tk.Entry(path_frame)
         self.path_entry.insert(0, self.config.get("image_path", ""))
         self.path_entry.pack(side="left", fill="x", expand=True, padx=6)
-        tk.Button(path_frame, text="찾아보기", command=self.select_path).pack(side="left")
+        tk.Button(path_frame, text="찾아보기", command=self.select_path).pack(
+            side="left"
+        )
 
         # 시간 옵션
-        timeout_frame = tk.Frame(frm); timeout_frame.pack(anchor="w", pady=(12, 0))
+        timeout_frame = tk.Frame(frm)
+        timeout_frame.pack(anchor="w", pady=(12, 0))
         tk.Label(timeout_frame, text="대기 시간(초):").pack(side="left")
         self.timeout_entry = tk.Entry(timeout_frame, width=8)
         self.timeout_entry.insert(0, str(self.config.get("timeout_seconds", 300)))
         self.timeout_entry.pack(side="left", padx=6)
 
-        slide_frame = tk.Frame(frm); slide_frame.pack(anchor="w", pady=(8, 0))
+        slide_frame = tk.Frame(frm)
+        slide_frame.pack(anchor="w", pady=(8, 0))
         tk.Label(slide_frame, text="슬라이드쇼 간격(초):").pack(side="left")
         self.slide_entry = tk.Entry(slide_frame, width=8)
         self.slide_entry.insert(0, str(self.config.get("slideshow_interval", 10)))
         self.slide_entry.pack(side="left", padx=6)
 
         # 배치/배경/셔플
-        opt_frame = tk.Frame(frm); opt_frame.pack(anchor="w", pady=(8, 0))
+        opt_frame = tk.Frame(frm)
+        opt_frame.pack(anchor="w", pady=(8, 0))
         tk.Label(opt_frame, text="배치:").pack(side="left")
         self.scale_var = tk.StringVar(value=self.config.get("scale_mode", "fit"))
-        tk.OptionMenu(opt_frame, self.scale_var, "fit", "fill", "stretch").pack(side="left", padx=6)
+        tk.OptionMenu(opt_frame, self.scale_var, "fit", "fill", "stretch").pack(
+            side="left", padx=6
+        )
 
         tk.Label(opt_frame, text="배경색:").pack(side="left", padx=(12, 0))
-        self.bg_preview = tk.Label(opt_frame, width=2, relief="groove", bg=self.config.get("background", "#000000"))
+        self.bg_preview = tk.Label(
+            opt_frame,
+            width=2,
+            relief="groove",
+            bg=self.config.get("background", "#000000"),
+        )
         self.bg_preview.pack(side="left", padx=6)
         tk.Button(opt_frame, text="선택", command=self.pick_color).pack(side="left")
 
         self.shuffle_var = tk.BooleanVar(value=self.config.get("shuffle", True))
-        tk.Checkbutton(opt_frame, text="셔플(폴더)", variable=self.shuffle_var).pack(side="left", padx=(12, 0))
+        tk.Checkbutton(opt_frame, text="셔플(폴더)", variable=self.shuffle_var).pack(
+            side="left", padx=(12, 0)
+        )
 
         # 추가 옵션
-        extra_frame = tk.Frame(frm); extra_frame.pack(anchor="w", pady=(8, 0))
-        self.allow_blank_var = tk.BooleanVar(value=self.config.get("allow_blank_single", True))
-        tk.Checkbutton(extra_frame, text="단일 이미지가 없어도 배경만으로 실행 허용", variable=self.allow_blank_var).pack(anchor="w")
-        self.clock_overlay_var = tk.BooleanVar(value=self.config.get("clock_overlay", False))
-        tk.Checkbutton(extra_frame, text="배경만일 때 시계 오버레이 표시", variable=self.clock_overlay_var).pack(anchor="w")
-        self.start_in_tray_var = tk.BooleanVar(value=self.config.get("start_in_tray", False))
-        tk.Checkbutton(extra_frame, text="프로그램 시작 시 트레이로만 실행(트레이 없으면 최소화)", variable=self.start_in_tray_var).pack(anchor="w")
+        extra_frame = tk.Frame(frm)
+        extra_frame.pack(anchor="w", pady=(8, 0))
+        self.allow_blank_var = tk.BooleanVar(
+            value=self.config.get("allow_blank_single", True)
+        )
+        tk.Checkbutton(
+            extra_frame,
+            text="단일 이미지가 없어도 배경만으로 실행 허용",
+            variable=self.allow_blank_var,
+        ).pack(anchor="w")
+        self.clock_overlay_var = tk.BooleanVar(
+            value=self.config.get("clock_overlay", False)
+        )
+        tk.Checkbutton(
+            extra_frame,
+            text="배경만일 때 시계 오버레이 표시",
+            variable=self.clock_overlay_var,
+        ).pack(anchor="w")
+        self.start_in_tray_var = tk.BooleanVar(
+            value=self.config.get("start_in_tray", False)
+        )
+        tk.Checkbutton(
+            extra_frame,
+            text="프로그램 시작 시 트레이로만 실행(트레이 없으면 최소화)",
+            variable=self.start_in_tray_var,
+        ).pack(anchor="w")
 
         # 동작 버튼
-        btn_frame = tk.Frame(frm); btn_frame.pack(fill="x", pady=(16, 0))
+        btn_frame = tk.Frame(frm)
+        btn_frame.pack(fill="x", pady=(16, 0))
         tk.Button(btn_frame, text="저장", command=self.save_config).pack(side="left")
-        tk.Button(btn_frame, text="미리보기", command=lambda: self.activate_screensaver(preview=True)).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="지금 실행", command=lambda: self.activate_screensaver(preview=False)).pack(side="left", padx=8)
-        tk.Button(btn_frame, text="닫기(트레이/최소화)", command=self.on_hide_to_tray).pack(side="right")
+        tk.Button(
+            btn_frame,
+            text="미리보기",
+            command=lambda: self.activate_screensaver(preview=True),
+        ).pack(side="left", padx=8)
+        tk.Button(
+            btn_frame,
+            text="지금 실행",
+            command=lambda: self.activate_screensaver(preview=False),
+        ).pack(side="left", padx=8)
+        tk.Button(
+            btn_frame, text="닫기(트레이/최소화)", command=self.on_hide_to_tray
+        ).pack(side="right")
 
-        note = tk.Label(frm, fg="#666", justify="left", anchor="w",
-                        text="※ Windows에서 시스템 유휴 시간과 멀티 모니터를 감지합니다.\n"
-                             "   단일 이미지가 없을 때 배경만으로 실행할 수 있으며, 시계 오버레이 옵션도 제공합니다.\n"
-                             "   설정 창을 닫으면 프로그램은 종료되지 않고 트레이(또는 최소화)로 이동합니다.")
+        note = tk.Label(
+            frm,
+            fg="#666",
+            justify="left",
+            anchor="w",
+            text="※ Windows에서 시스템 유휴 시간과 멀티 모니터를 감지합니다.\n"
+            "   단일 이미지가 없을 때 배경만으로 실행할 수 있으며, 시계 오버레이 옵션도 제공합니다.\n"
+            "   설정 창을 닫으면 프로그램은 종료되지 않고 트레이(또는 최소화)로 이동합니다.",
+        )
         note.pack(fill="x", pady=(12, 0))
 
     def pick_color(self):
@@ -280,10 +339,12 @@ class ScreenSaverApp:
     def select_path(self):
         mode = self.mode_var.get()
         if mode == "single":
-            path = filedialog.askopenfilename(filetypes=[
-                ("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.webp"),
-                ("All Files", "*.*")
-            ])
+            path = filedialog.askopenfilename(
+                filetypes=[
+                    ("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.webp"),
+                    ("All Files", "*.*"),
+                ]
+            )
         else:
             path = filedialog.askdirectory()
         if path:
@@ -312,13 +373,17 @@ class ScreenSaverApp:
                 "scale_mode": self.scale_var.get(),
                 "background": self.bg_preview["bg"],
                 "shuffle": bool(self.shuffle_var.get()),
-                "mouse_move_exit_pixels": int(self.config.get("mouse_move_exit_pixels", 10)),
+                "mouse_move_exit_pixels": int(
+                    self.config.get("mouse_move_exit_pixels", 10)
+                ),
                 "allow_blank_single": bool(self.allow_blank_var.get()),
                 "clock_overlay": bool(self.clock_overlay_var.get()),
                 "start_in_tray": bool(self.start_in_tray_var.get()),
             }
         except ValueError:
-            messagebox.showerror("오류", "숫자 항목(대기 시간, 슬라이드쇼 간격)을 확인하세요.")
+            messagebox.showerror(
+                "오류", "숫자 항목(대기 시간, 슬라이드쇼 간격)을 확인하세요."
+            )
             return
 
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
@@ -347,25 +412,28 @@ class ScreenSaverApp:
         if self.saver_active:
             return
 
-        
         # 루트 창에서도 키 입력 감지하도록 바인딩 추가
         self.root.bind("<Any-KeyPress>", self.exit_screensaver)
 
         # 현재 UI 값으로 설정 업데이트(저장버튼 안 눌러도 반영)
         try:
-            self.config.update({
-                "mode": self.mode_var.get(),
-                "image_path": self.path_entry.get().strip(),
-                "timeout_seconds": int(self.timeout_entry.get()),
-                "slideshow_interval": int(self.slide_entry.get()),
-                "scale_mode": self.scale_var.get(),
-                "background": self.bg_preview["bg"],
-                "shuffle": bool(self.shuffle_var.get()),
-                "allow_blank_single": bool(self.allow_blank_var.get()),
-                "clock_overlay": bool(self.clock_overlay_var.get()),
-            })
+            self.config.update(
+                {
+                    "mode": self.mode_var.get(),
+                    "image_path": self.path_entry.get().strip(),
+                    "timeout_seconds": int(self.timeout_entry.get()),
+                    "slideshow_interval": int(self.slide_entry.get()),
+                    "scale_mode": self.scale_var.get(),
+                    "background": self.bg_preview["bg"],
+                    "shuffle": bool(self.shuffle_var.get()),
+                    "allow_blank_single": bool(self.allow_blank_var.get()),
+                    "clock_overlay": bool(self.clock_overlay_var.get()),
+                }
+            )
         except ValueError:
-            messagebox.showerror("오류", "숫자 항목(대기 시간, 슬라이드쇼 간격)을 확인하세요.")
+            messagebox.showerror(
+                "오류", "숫자 항목(대기 시간, 슬라이드쇼 간격)을 확인하세요."
+            )
             return
 
         # 이미지 목록 준비
@@ -534,7 +602,9 @@ class ScreenSaverApp:
         self.clock_job = self.root.after(1000, self.update_clock_overlay)
 
     def update_clock_overlay(self):
-        if not self.saver_active or not (self.background_only and self.config.get("clock_overlay", False)):
+        if not self.saver_active or not (
+            self.background_only and self.config.get("clock_overlay", False)
+        ):
             return
         bg = self.config.get("background", "#000000")
         now = time.strftime("%H:%M:%S")
@@ -594,12 +664,12 @@ class ScreenSaverApp:
 
         # 설정 창 복원(트레이가 있으면 사용자가 아이콘으로 여는 걸 선호할 수 있어 복원하지 않음)
         if not self.tray:
-                try:
-                    if not self .root.winfo_viewable():
-                        self.root.deiconify()
-                        self.root.lift()
-                except Exception:
-                    pass
+            try:
+                if not self.root.winfo_viewable():
+                    self.root.deiconify()
+                    self.root.lift()
+            except Exception:
+                pass
 
     # ---------------- 트레이 ----------------
     def setup_tray_async(self):
@@ -630,9 +700,11 @@ class ScreenSaverApp:
             menu = pystray.Menu(
                 pystray.MenuItem("설정 열기", on_open),
                 pystray.MenuItem("지금 화면보호기 실행", on_run_now),
-                pystray.MenuItem("종료", on_exit)
+                pystray.MenuItem("종료", on_exit),
             )
-            icon = pystray.Icon("screensaver", icon=create_icon(), title="화면보호기", menu=menu)
+            icon = pystray.Icon(
+                "screensaver", icon=create_icon(), title="화면보호기", menu=menu
+            )
             self.tray = icon
 
             t = threading.Thread(target=icon.run, daemon=True)
@@ -650,9 +722,10 @@ class ScreenSaverApp:
             if self.tray:
                 self.root.withdraw()  # 트레이에서 다시 열 수 있음
             else:
-                self.root.iconify()   # 트레이가 없으면 최소화하여 작업 표시줄에서 복원 가능
+                self.root.iconify()  # 트레이가 없으면 최소화하여 작업 표시줄에서 복원 가능
         except Exception:
             pass
+
     def on_exit_app(self):
         try:
             if self.tray:
